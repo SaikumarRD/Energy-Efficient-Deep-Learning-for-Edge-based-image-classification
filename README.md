@@ -18,7 +18,7 @@
 - [x] **Knowledge Distillation**: Teacher-Student distillation transferring representations from ResNet-50 into MobileNetV3-Small.
 - [x] **Quantization & ONNX Export**: Post-Training INT8 Quantization for Edge CPU deployment.
 - [x] **Comparative Research Benchmarking**: Evaluation across Accuracy, F1-Score, Parameters, FLOPs/GMACs, Edge CPU Latency, and Energy Consumption (CodeCarbon).
-- [ ] **Interactive Frontend / Dashboard** *(In Progress)*: Streamlit / Web UI for real-time leaf image upload and inference.
+- [x] **Interactive Web UI & REST API**: Full-stack application (FastAPI + HTML5/CSS3/JavaScript) serving the compressed ONNX model (`KD_MobileNetV3`) for real-time edge leaf diagnosis.
 - [ ] **Edge Hardware Deployment** *(Planned)*: Testing on Raspberry Pi / Intel OpenVINO edge kit.
 
 ---
@@ -56,6 +56,11 @@ All models were evaluated under identical edge CPU runtime conditions with locke
 ## 📂 Repository Structure
 
 ```text
+├── app.py                               # FastAPI backend serving ONNX inference
+├── frontend/                            # Web UI (HTML5, modern CSS3, vanilla JS)
+│   ├── index.html                       # Dashboard layout & disease diagnosis UI
+│   ├── style.css                        # Modern dark-mode responsive styling
+│   └── script.js                        # Drag-and-drop & API integration
 ├── dataset_setup.py                     # Data loaders, augmentations & seed reproducibility
 ├── baseline_and_benchmark.py            # Baseline ResNet-50 training & benchmark pipeline
 ├── step3_pruning.py                     # Structured channel pruning implementation
@@ -118,6 +123,14 @@ Each stage of the optimization pipeline can be executed sequentially:
   ```
 
 The comparative metrics will be saved in `final_research_comparison.csv`.
+
+### 4. Running the Web Application
+To launch the interactive leaf diagnosis web application powered by FastAPI and the compressed ONNX model:
+
+```bash
+uvicorn app:app --reload --port 8000
+```
+Then open your browser and navigate to **`http://localhost:8000`**.
 
 ---
 

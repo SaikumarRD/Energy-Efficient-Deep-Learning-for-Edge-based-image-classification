@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Edge-AI Plant Disease Diagnosis</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- ── HERO / HEADER ───────────────────────────────────────────────── -->
+  <header class="hero">
+    <div class="hero-content">
+      <span class="badge">🌿 Edge AI · IoT · Module 3 Project</span>
+      <h1>Plant Disease <span class="gradient-text">Diagnosis</span></h1>
+      <p class="subtitle">
+        Upload a leaf photo and our compressed <strong>MobileNetV3</strong> model
+        (only <strong>6 MB</strong>, runs in <strong>10 ms</strong>) will identify the disease instantly.
+      </p>
+    </div>
+  </header>
+
+  <!-- ── MAIN CONTENT ────────────────────────────────────────────────── -->
+  <main class="container">
+
+    <!-- Upload Card -->
+    <section class="card upload-card" id="uploadCard">
+      <div class="dropzone" id="dropzone">
+        <div class="dropzone-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+            <polyline points="17 8 12 3 7 8"/>
+            <line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+        </div>
+        <p class="dropzone-text">Drag & drop a leaf image here</p>
+        <p class="dropzone-hint">or click to browse · JPG, PNG, WEBP</p>
+        <input type="file" id="fileInput" accept="image/*" hidden />
+      </div>
+
+      <!-- Preview -->
+      <div class="preview-area hidden" id="previewArea">
+        <img id="previewImg" alt="Uploaded leaf" />
+        <button class="btn-secondary" id="clearBtn">✕ Clear</button>
+      </div>
+
+      <button class="btn-primary" id="predictBtn" disabled>
+        <span class="btn-icon">🔬</span> Analyze Leaf
+      </button>
+    </section>
+
+    <!-- Results Card -->
+    <section class="card result-card hidden" id="resultCard">
+      <div class="result-header" id="resultHeader">
+        <div class="result-status" id="resultStatus"></div>
+        <h2 id="topClass">—</h2>
+        <div class="confidence-bar-wrapper">
+          <div class="confidence-bar" id="confidenceBar"></div>
+        </div>
+        <p class="confidence-text" id="confidenceText">—</p>
+      </div>
+
+      <div class="top5-list" id="top5List">
+        <!-- Populated dynamically -->
+      </div>
+    </section>
+
+    <!-- Loading Overlay -->
+    <div class="loader-overlay hidden" id="loader">
+      <div class="spinner"></div>
+      <p>Running inference on Edge CPU…</p>
+    </div>
+
+    <!-- ── RESEARCH COMPARISON TABLE ─────────────────────────────────── -->
+    <section class="card table-card">
+      <h2>📊 Model Compression Comparison</h2>
+      <p class="table-desc">All 5 model variants benchmarked under identical edge-CPU conditions (seed=42, batch=1, 4 threads).</p>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>Accuracy</th>
+              <th>F1</th>
+              <th>Size</th>
+              <th>Latency</th>
+              <th>Energy</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Baseline ResNet-50 <span class="tag">FP32</span></td>
+              <td>99.83%</td><td>99.75%</td><td>90.16 MB</td><td>94.91 ms</td><td>0.545 Wh</td>
+            </tr>
+            <tr>
+              <td>Pruned ResNet-50 <span class="tag">25% Ch</span></td>
+              <td>99.47%</td><td>99.38%</td><td>50.93 MB</td><td>49.82 ms</td><td>0.282 Wh</td>
+            </tr>
+            <tr>
+              <td>Quantized ResNet-50 <span class="tag">INT8</span></td>
+              <td>98.68%</td><td>98.73%</td><td>22.62 MB</td><td>53.10 ms</td><td>0.363 Wh</td>
+            </tr>
+            <tr class="highlight-row">
+              <td>⭐ KD MobileNetV3 <span class="tag best">FP32</span></td>
+              <td><strong>99.66%</strong></td><td><strong>99.66%</strong></td><td><strong>6.01 MB</strong></td><td><strong>10.02 ms</strong></td><td><strong>0.060 Wh</strong></td>
+            </tr>
+            <tr class="dim-row">
+              <td>KD MobileNetV3 + INT8 <span class="tag warn">Collapsed</span></td>
+              <td>9.15%</td><td>3.24%</td><td>1.63 MB</td><td>11.73 ms</td><td>0.089 Wh</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="table-footnote">
+        💡 <strong>Knowledge Distillation</strong> achieves 15× size reduction and 9.5× latency speedup
+        with only 0.17% accuracy drop — the clear winner for edge deployment.
+      </p>
+    </section>
+
+    <!-- ── ARCHITECTURE OVERVIEW ─────────────────────────────────────── -->
+    <section class="card arch-card">
+      <h2>🏗️ Compression Pipeline</h2>
+      <div class="pipeline">
+        <div class="pipeline-step">
+          <div class="step-num">1</div>
+          <h3>Dataset Setup</h3>
+          <p>23-class plant disease dataset · ImageNet augmentation · Deterministic splits</p>
+        </div>
+        <div class="pipeline-arrow">→</div>
+        <div class="pipeline-step">
+          <div class="step-num">2</div>
+          <h3>Baseline CNN</h3>
+          <p>ResNet-50 (pretrained) · AdamW + Cosine LR · 99.83% accuracy</p>
+        </div>
+        <div class="pipeline-arrow">→</div>
+        <div class="pipeline-step active">
+          <div class="step-num">3</div>
+          <h3>Compression</h3>
+          <p>Pruning · Knowledge Distillation · INT8 Quantization</p>
+        </div>
+        <div class="pipeline-arrow">→</div>
+        <div class="pipeline-step">
+          <div class="step-num">4</div>
+          <h3>Edge Deployment</h3>
+          <p>ONNX Runtime · 4-thread CPU · Latency & Energy benchmarks</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ── FOOTER ──────────────────────────────────────────────────────── -->
+  <footer>
+    <p>Module 3 Project · AI & IoT · Built with PyTorch, ONNX Runtime & FastAPI</p>
+  </footer>
+
+  <script src="/static/script.js"></script>
+</body>
+</html>
+

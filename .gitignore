@@ -26,6 +26,9 @@ plant_disease_data/
 emissions.csv
 *.log
 
+# Temporary test scripts
+test_app.py
+
 # OS & Editor generated files
 .DS_Store
 Thumbs.db
