@@ -1,162 +1,350 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Edge-AI Plant Disease Diagnosis</title>
-  <link rel="stylesheet" href="/static/style.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<meta charset="UTF-8">
+<meta name="color-scheme" content="light dark">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TerraLeaf Edge AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;600&family=Instrument+Sans:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style id="dashboard-styles">
+:root{--ink:#15221A;--ink2:#2B3A31;--paper:#FBFCF9;--lichen:#E4E9DF;--line:#C9D1C2;--track:#D5DACF;--win:#E3EFDD;--raise:#fff;--onink:#F1F4EC;--good:#1F5A38;--bad:#8F3520;--warn:#8A5A0F;--view:#C4D3B8;--leaf:#2E6B45;--clay:#A8432B;--hd:'Bricolage Grotesque',system-ui,sans-serif;color-scheme:light dark}
+@media (prefers-color-scheme:dark){:root{--ink:#E8EEE3;--ink2:#B5C6B9;--paper:#18241D;--lichen:#0F1813;--line:#2C3D33;--track:#2A3A31;--win:#1F3A2A;--raise:#223229;--onink:#15221A;--good:#8FD0A0;--bad:#EE9A84;--warn:#E3B25A;--view:#26382C}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--lichen);color:var(--ink);font:14px/1.5 'Instrument Sans',system-ui,sans-serif}
+button{font:inherit;color:inherit;cursor:pointer}
+svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px 40px}
+.isle{position:sticky;top:12px;z-index:30;max-width:780px;margin:12px auto 22px;background:var(--paper);border:.5px solid var(--line);border-radius:26px}
+.isle-row{display:flex;align-items:center;gap:14px;padding:8px 8px 8px 18px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:8px;font:600 16px var(--hd);letter-spacing:-.01em;margin-right:auto}
+.brand svg{color:var(--leaf);width:20px;height:20px}
+.seg{display:flex;background:var(--lichen);border-radius:999px;padding:3px;font-size:13px}
+.seg button{border:0;background:none;padding:5px 12px;border-radius:999px;color:var(--ink2)}
+.seg button.on{background:var(--ink);color:var(--onink)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;background:var(--ink);color:var(--onink);border:0;border-radius:999px;padding:8px 16px;font-size:13px}
+.btn:focus-visible,.seg button:focus-visible,.chip:focus-visible,.th:focus-visible{outline:2px solid var(--leaf);outline-offset:2px}
+.isle-t{max-height:0;opacity:0;overflow:hidden;padding:0 18px;font-size:13px;color:var(--good);display:flex;align-items:center;gap:7px;transition:max-height .25s ease,opacity .25s ease,padding .25s ease}
+.isle.t .isle-t{max-height:44px;opacity:1;padding:0 18px 10px}
+.xw{position:relative}
+.menu{display:none;position:absolute;right:0;top:calc(100% + 8px);min-width:210px;background:var(--raise);border:.5px solid var(--line);border-radius:12px;padding:4px;box-shadow:0 8px 24px rgba(21,34,26,.14)}
+.menu.o{display:block}
+.menu button{display:flex;width:100%;text-align:left;gap:8px;align-items:center;border:0;background:none;padding:8px 10px;border-radius:8px;font-size:13px}
+.menu button:hover{background:var(--lichen)}
+.card{background:var(--paper);border:.5px solid var(--line);border-radius:14px;padding:14px}
+h2{font:600 18px var(--hd);letter-spacing:-.01em;margin:34px 0 4px}
+.sub{color:var(--ink2);font-size:13px;margin:0 0 12px}
+.top{display:grid;grid-template-columns:minmax(0,13fr) minmax(0,7fr);gap:12px;align-items:stretch}
+.view{position:relative;flex:1;min-height:300px;background:var(--view);border:1.5px dashed #7C8B7F;border-radius:10px;overflow:hidden;cursor:pointer}
+.stage{position:absolute;left:50%;top:50%;width:340px;height:200px;margin:-100px 0 0 -170px}
+.stage>svg.lf{position:absolute;left:95px;top:25px}
+.ring{position:absolute;border:1.5px solid var(--ink);border-radius:50%}
+.stage.none .ring,.stage.none .ld,.stage.none .lb{display:none}
+.ld{position:absolute;left:0;top:0;overflow:visible}
+.ld polyline{fill:none;stroke:var(--ink);stroke-width:1.2}
+.lb{position:absolute;background:var(--paper);border:.5px solid var(--line);border-radius:6px;padding:5px 8px;font-size:12px;line-height:1.35;width:92px}
+.lb b{display:block;font-weight:500}
+.gridov,.sweep{position:absolute;left:0;right:0;top:0;pointer-events:none;display:none}
+.gridov{height:100%;background-image:linear-gradient(rgba(21,34,26,.14) 1px,transparent 1px),linear-gradient(90deg,rgba(21,34,26,.14) 1px,transparent 1px);background-size:16px 16px}
+.sweep{height:2px;background:var(--onink);box-shadow:0 0 14px 4px rgba(241,244,236,.85)}
+.scan .gridov,.scan .sweep{display:block}
+.scan .sweep{animation:sw 1.6s ease-in-out both}
+.scan .gridov{animation:gr 1.6s ease-in-out both}
+.scan .ring{animation:rg .5s ease 1.5s both}
+.scan .ld polyline{stroke-dasharray:100;animation:ln .5s ease 1.9s both}
+.scan .lb{animation:lb .4s ease 2.3s both}
+@keyframes sw{0%{top:0;opacity:0}8%{opacity:1}100%{top:calc(100% - 2px);opacity:1}}
+@keyframes gr{0%{clip-path:inset(0 0 100% 0)}100%{clip-path:inset(0 0 0 0)}}
+@keyframes rg{from{opacity:0;transform:scale(.5)}to{opacity:1;transform:none}}
+@keyframes ln{from{stroke-dashoffset:100}to{stroke-dashoffset:0}}
+@keyframes lb{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+#up{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.hint{position:absolute;top:8px;right:8px;background:var(--paper);border-radius:999px;padding:4px 10px;font-size:12px;color:var(--ink2)}
+.row2{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:0 2px}
+.sel{position:relative}
+.sel>button{display:flex;align-items:center;gap:8px;background:var(--raise);border:.5px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px}
+.sel .menu{top:auto;bottom:calc(100% + 6px);width:230px}
+.thumbs{display:flex;gap:6px}
+.thumbs button{flex:1;height:38px;border-radius:7px;border:0;position:relative}
+.thumbs button.on{outline:2px solid var(--ink);outline-offset:2px}
+.thumbs .add{background:none;border:1px dashed #7C8B7F;color:var(--ink2);display:flex;align-items:center;justify-content:center}
+.rep{display:flex;flex-direction:column;gap:14px;padding:16px}
+.rep h3{font:600 22px var(--hd);letter-spacing:-.01em;line-height:1.2;margin:0}
+.lat{font-style:italic;color:var(--ink2);font-size:13px}
+.segs{display:flex;gap:3px;margin-top:12px}.segs span{flex:1;height:6px;border-radius:2px}
+.dim{color:var(--ink2)}
+.pill{display:inline-flex;background:var(--lichen);border-radius:999px;padding:3px;font-size:13px}
+.pill button{border:0;background:none;padding:5px 12px;border-radius:999px;color:var(--ink2)}.pill button.on{background:var(--ink);color:var(--onink)}
+.lb4,.lr{display:grid;gap:10px;align-items:center}
+.lr{grid-template-columns:minmax(150px,1.4fr) repeat(3,minmax(62px,.5fr)) 260px;min-height:50px;padding:0 10px;border-top:.5px solid var(--lichen);transition:opacity .2s}
+.lr.h{min-height:34px;border-top:0;border-bottom:.5px solid var(--line);color:var(--ink2);font-size:12px;align-items:end;padding-bottom:8px}
+.lr.w{background:var(--win);border-radius:8px;font-weight:500;border-top-color:transparent}
+.lr .sp{display:flex;align-items:center;gap:10px}.lr .ms{width:62px;text-align:right}
+.two{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:12px;align-items:start}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 11px;border-radius:999px;font-size:13px;background:var(--lichen);border:1.5px solid transparent}
+.chip.on{background:var(--raise)}
+.sw{width:10px;height:10px;border-radius:50%;display:inline-block}
+.xr{display:grid;grid-template-columns:90px 92px 78px minmax(180px,1fr);gap:10px;align-items:center;padding:7px 0;border-top:.5px solid var(--lichen)}
+.tr{position:relative;height:34px}
+.tr:before{content:"";position:absolute;left:3%;right:3%;top:50%;height:2px;margin-top:-1px;background:var(--line)}
+.dt{position:absolute;border-radius:50%;transform:translate(-50%,-50%);cursor:pointer}
+.bk{position:absolute;top:50%;transform:translate(-50%,-50%);background:var(--paper);padding:0 3px;font-size:12px;color:var(--ink2)}
+.da{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:12px}
+.da .card{padding:18px}
+.pc{display:block;font-size:12px;font-weight:400;color:var(--ink2)}
+.foot{margin:28px 0 0;color:var(--ink2);font-size:12px;text-align:center}
+.sc{overflow-x:auto}
+@media (max-width:860px){.top,.two{grid-template-columns:minmax(0,1fr)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="i-leaf" viewBox="0 0 24 24"><path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.5 19 2c1 2 2 4.2 2 8 0 5.5-4.8 10-10 10z"/><path d="M2 21c0-3 1.9-5.5 6-7"/></symbol>
+<symbol id="i-dl" viewBox="0 0 24 24"><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 11l5 5 5-5M12 4v12"/></symbol>
+<symbol id="i-ch" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></symbol>
+<symbol id="i-ok" viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></symbol>
+<symbol id="i-no" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9 9l6 6M15 9l-6 6"/></symbol>
+<symbol id="i-pl" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="i-sc" viewBox="0 0 24 24"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2M4 12h16"/></symbol>
+<symbol id="i-up" viewBox="0 0 24 24"><path d="M15 8h.01M12 20H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v6M4 15l4-4c.9-.9 2.1-.9 3 0l3 3M14 14l1-1c.7-.7 1.6-.9 2.4-.5M16 19h6M19 16v6"/></symbol>
+</defs></svg>
 
-  <!-- ── HERO / HEADER ───────────────────────────────────────────────── -->
-  <header class="hero">
-    <div class="hero-content">
-      <span class="badge">🌿 Edge AI · IoT · Module 3 Project</span>
-      <h1>Plant Disease <span class="gradient-text">Diagnosis</span></h1>
-      <p class="subtitle">
-        Upload a leaf photo and our compressed <strong>MobileNetV3</strong> model
-        (only <strong>6 MB</strong>, runs in <strong>10 ms</strong>) will identify the disease instantly.
-      </p>
+<header class="isle" id="isle">
+  <div class="isle-row">
+    <div class="brand"><svg class="i"><use href="#i-leaf"/></svg>TerraLeaf</div>
+    <div class="seg" role="group" aria-label="Data source"><button id="mLog" class="on">Logged profile</button><button id="mLive">Live API</button></div>
+    <div class="xw">
+      <button class="btn" id="xb" aria-haspopup="true"><svg class="i"><use href="#i-dl"/></svg>Export<svg class="i"><use href="#i-ch"/></svg></button>
+      <div class="menu" id="xm"><button id="xcsv"><svg class="i"><use href="#i-dl"/></svg>Comparison table (.csv)</button><button id="xzip"><svg class="i"><use href="#i-dl"/></svg>Separate files (.zip)</button></div>
     </div>
-  </header>
+  </div>
+  <div class="isle-t" role="status"><svg class="i"><use href="#i-ok"/></svg><span id="tt"></span></div>
+</header>
 
-  <!-- ── MAIN CONTENT ────────────────────────────────────────────────── -->
-  <main class="container">
-
-    <!-- Upload Card -->
-    <section class="card upload-card" id="uploadCard">
-      <div class="dropzone" id="dropzone">
-        <div class="dropzone-icon">
-          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-            <polyline points="17 8 12 3 7 8"/>
-            <line x1="12" y1="3" x2="12" y2="15"/>
-          </svg>
+<main class="wrap">
+  <section class="top" aria-label="Leaf diagnosis">
+    <div class="card" style="display:flex;flex-direction:column;gap:8px;padding:10px">
+      <div class="view" id="view">
+        <img id="up" alt="Uploaded leaf" hidden>
+        <div class="stage" id="stage">
+          <svg class="lf" id="lf" width="150" height="150" viewBox="0 0 90 90" aria-hidden="true"></svg>
+          <div class="ring" style="left:143px;top:73px;width:30px;height:30px"></div>
+          <div class="ring" style="left:163px;top:92px;width:40px;height:40px"></div>
+          <div class="ring" style="left:158px;top:130px;width:24px;height:24px"></div>
+          <svg class="ld" width="340" height="200" aria-hidden="true"><polyline pathLength="100" points="203,106 232,76 254,76"/><polyline pathLength="100" points="143,88 112,60 86,60"/><polyline pathLength="100" points="158,142 118,162 86,162"/></svg>
+          <div class="lb" style="left:254px;top:60px" id="lb1"></div>
+          <div class="lb" style="left:0;top:48px;text-align:right"><b>Lesion 2</b>Spread zone</div>
+          <div class="lb" style="left:0;top:150px;text-align:right"><b>Lesion 3</b>Early spot</div>
         </div>
-        <p class="dropzone-text">Drag & drop a leaf image here</p>
-        <p class="dropzone-hint">or click to browse · JPG, PNG, WEBP</p>
-        <input type="file" id="fileInput" accept="image/*" hidden />
+        <div class="gridov"></div><div class="sweep"></div>
+        <span class="hint" style="display:flex;align-items:center;gap:5px"><svg class="i" style="width:14px;height:14px"><use href="#i-up"/></svg>Drop to replace</span>
+        <input type="file" id="file" accept="image/*" hidden>
       </div>
-
-      <!-- Preview -->
-      <div class="preview-area hidden" id="previewArea">
-        <img id="previewImg" alt="Uploaded leaf" />
-        <button class="btn-secondary" id="clearBtn">✕ Clear</button>
+      <div class="row2"><span class="dim" id="cls" style="font-size:12px"></span>
+        <div class="sel"><button id="sb" aria-haspopup="true"><svg class="i"><use href="#i-sc"/></svg><span id="sl">All four models</span><svg class="i"><use href="#i-ch"/></svg></button><div class="menu" id="sm"></div></div>
       </div>
-
-      <button class="btn-primary" id="predictBtn" disabled>
-        <span class="btn-icon">🔬</span> Analyze Leaf
-      </button>
-    </section>
-
-    <!-- Results Card -->
-    <section class="card result-card hidden" id="resultCard">
-      <div class="result-header" id="resultHeader">
-        <div class="result-status" id="resultStatus"></div>
-        <h2 id="topClass">—</h2>
-        <div class="confidence-bar-wrapper">
-          <div class="confidence-bar" id="confidenceBar"></div>
-        </div>
-        <p class="confidence-text" id="confidenceText">—</p>
-      </div>
-
-      <div class="top5-list" id="top5List">
-        <!-- Populated dynamically -->
-      </div>
-    </section>
-
-    <!-- Loading Overlay -->
-    <div class="loader-overlay hidden" id="loader">
-      <div class="spinner"></div>
-      <p>Running inference on Edge CPU…</p>
+      <div class="thumbs" id="thumbs"></div>
+      <button class="btn" id="go" style="border-radius:10px;padding:11px"><svg class="i"><use href="#i-sc"/></svg>Analyze the image</button>
     </div>
 
-    <!-- ── RESEARCH COMPARISON TABLE ─────────────────────────────────── -->
-    <section class="card table-card">
-      <h2>📊 Model Compression Comparison</h2>
-      <p class="table-desc">All 5 model variants benchmarked under identical edge-CPU conditions (seed=42, batch=1, 4 threads).</p>
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th>Model</th>
-              <th>Accuracy</th>
-              <th>F1</th>
-              <th>Size</th>
-              <th>Latency</th>
-              <th>Energy</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>Baseline ResNet-50 <span class="tag">FP32</span></td>
-              <td>99.83%</td><td>99.75%</td><td>90.16 MB</td><td>94.91 ms</td><td>0.545 Wh</td>
-            </tr>
-            <tr>
-              <td>Pruned ResNet-50 <span class="tag">25% Ch</span></td>
-              <td>99.47%</td><td>99.38%</td><td>50.93 MB</td><td>49.82 ms</td><td>0.282 Wh</td>
-            </tr>
-            <tr>
-              <td>Quantized ResNet-50 <span class="tag">INT8</span></td>
-              <td>98.68%</td><td>98.73%</td><td>22.62 MB</td><td>53.10 ms</td><td>0.363 Wh</td>
-            </tr>
-            <tr class="highlight-row">
-              <td>⭐ KD MobileNetV3 <span class="tag best">FP32</span></td>
-              <td><strong>99.66%</strong></td><td><strong>99.66%</strong></td><td><strong>6.01 MB</strong></td><td><strong>10.02 ms</strong></td><td><strong>0.060 Wh</strong></td>
-            </tr>
-            <tr class="dim-row">
-              <td>KD MobileNetV3 + INT8 <span class="tag warn">Collapsed</span></td>
-              <td>9.15%</td><td>3.24%</td><td>1.63 MB</td><td>11.73 ms</td><td>0.089 Wh</td>
-            </tr>
-          </tbody>
-        </table>
+    <div class="card rep" aria-live="polite">
+      <div style="padding-bottom:12px;border-bottom:.5px solid var(--line)">
+        <h3 id="ttl"></h3><div class="lat" id="latn"></div><div class="dim" id="hostn" style="font-size:12px;margin-top:2px"></div>
+        <div class="segs" id="segs"></div><div id="sev" style="font-size:13px;font-weight:500;margin-top:5px"></div>
       </div>
-      <p class="table-footnote">
-        💡 <strong>Knowledge Distillation</strong> achieves 15× size reduction and 9.5× latency speedup
-        with only 0.17% accuracy drop — the clear winner for edge deployment.
-      </p>
-    </section>
-
-    <!-- ── ARCHITECTURE OVERVIEW ─────────────────────────────────────── -->
-    <section class="card arch-card">
-      <h2>🏗️ Compression Pipeline</h2>
-      <div class="pipeline">
-        <div class="pipeline-step">
-          <div class="step-num">1</div>
-          <h3>Dataset Setup</h3>
-          <p>23-class plant disease dataset · ImageNet augmentation · Deterministic splits</p>
-        </div>
-        <div class="pipeline-arrow">→</div>
-        <div class="pipeline-step">
-          <div class="step-num">2</div>
-          <h3>Baseline CNN</h3>
-          <p>ResNet-50 (pretrained) · AdamW + Cosine LR · 99.83% accuracy</p>
-        </div>
-        <div class="pipeline-arrow">→</div>
-        <div class="pipeline-step active">
-          <div class="step-num">3</div>
-          <h3>Compression</h3>
-          <p>Pruning · Knowledge Distillation · INT8 Quantization</p>
-        </div>
-        <div class="pipeline-arrow">→</div>
-        <div class="pipeline-step">
-          <div class="step-num">4</div>
-          <h3>Edge Deployment</h3>
-          <p>ONNX Runtime · 4-thread CPU · Latency & Energy benchmarks</p>
-        </div>
+      <div style="display:flex;gap:12px;align-items:center">
+        <svg width="72" height="72" viewBox="0 0 76 76" style="flex:none" role="img" aria-label="Confidence"><circle cx="38" cy="38" r="32" fill="none" stroke="var(--track)" stroke-width="7"/><circle id="rg" cx="38" cy="38" r="32" fill="none" stroke="#2E6B45" stroke-width="7" stroke-linecap="round" transform="rotate(-90 38 38)" style="transition:stroke-dasharray .5s ease"/><text id="rt" x="38" y="43" text-anchor="middle" font-size="14" font-weight="500" fill="var(--ink)">0%</text></svg>
+        <div id="tp" style="flex:1;font-size:13px;line-height:1.8"></div>
       </div>
-    </section>
+      <div id="note" style="font-size:13px;line-height:1.6"></div>
+      <div><div class="pill"><button id="tO" class="on">Organic</button><button id="tC">Chemical</button></div><div id="rem" style="font-size:13px;line-height:1.6;margin-top:8px"></div></div>
+    </div>
+  </section>
 
-  </main>
+  <h2>Race on a plain CPU</h2>
+  <p class="sub">500 single-image runs, batch size 1, 4 CPU threads. Sparklines share one scale, so a higher line means slower.</p>
+  <div class="card sc"><div style="min-width:620px" id="lboard"></div></div>
 
-  <!-- ── FOOTER ──────────────────────────────────────────────────────── -->
-  <footer>
-    <p>Module 3 Project · AI & IoT · Built with PyTorch, ONNX Runtime & FastAPI</p>
-  </footer>
+  <h2>Trade-offs</h2>
+  <p class="sub">Pick a metric to resize the models, or pick a model to see where it ranks.</p>
+  <div class="two">
+    <div class="card">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="sqc"></div>
+      <div style="display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap"><svg id="sq" width="150" height="150" viewBox="0 0 150 150" role="img" aria-label="Nested squares sized by the chosen metric"></svg><div id="sql" style="flex:1;min-width:150px;font-size:13px;line-height:2"></div></div>
+      <div class="dim" style="font-size:12px;margin-top:8px">Square area matches the value. The baseline is the outer square.</div>
+    </div>
+    <div class="card sc">
+      <div id="xchips" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px"></div>
+      <div id="xsum" style="font:600 16px var(--hd);margin-bottom:8px"></div>
+      <div style="min-width:520px"><div class="xr" style="border:0;padding:0 0 6px;font-size:12px;color:var(--ink2)"><span>Metric</span><span>Value</span><span>Rank</span><span style="display:flex;justify-content:space-between"><span>Worse</span><span>Better</span></span></div><div id="xrows"></div>
+      <div class="dim" style="font-size:12px;margin-top:8px">Dots sit at true values. Latency, energy, size, params and GMACs use a log scale. Accuracy and F1 zoom into 98.5% to 100%, and the break marks lower scores.</div></div>
+    </div>
+  </div>
 
-  <script src="/static/script.js"></script>
+  <div class="da">
+    <div class="card" style="border:1.5px solid var(--leaf)"><div style="display:flex;align-items:center;gap:8px;color:var(--good);font-weight:500"><svg class="i" style="width:18px;height:18px"><use href="#i-ok"/></svg>Deploy</div><div style="font:600 18px var(--hd);margin:8px 0 4px">Distilled MobileNetV3</div><div class="dim" style="line-height:1.6">99.8 FPS on an edge CPU, 88.9% less energy, 67.7x fewer MACs, 99.66% accuracy.</div></div>
+    <div class="card"><div style="display:flex;align-items:center;gap:8px;color:var(--bad);font-weight:500"><svg class="i" style="width:18px;height:18px"><use href="#i-no"/></svg>Avoid</div><div style="font:600 18px var(--hd);margin:8px 0 4px">Distilled plus INT8</div><div class="dim" style="line-height:1.6">Shrinks to 1.63 MB but accuracy falls to 9.15%. HardSwish activations in the depthwise layers react badly to dynamic INT8.</div></div>
+  </div>
+  <p class="foot">CPU target: x86_64, 4 threads, batch 1. Measured with THOP and CodeCarbon on 35,725 images.</p>
+</main>
+
+<script id="dashboard-script">
+const $=id=>document.getElementById(id);
+let live=false,tT,currentFile=null;
+const M=[
+{n:'ResNet-50 baseline',s:'Baseline',acc:99.83,f1:99.75,sz:90.16,pa:23.56,gm:4.132,lat:94.91,en:.5449,c:'#7C8B7F'},
+{n:'Pruned ResNet-50',s:'Pruned',acc:99.47,f1:99.38,sz:50.93,pa:13.28,gm:2.397,lat:49.82,en:.2824,c:'#B7791F'},
+{n:'Quantized ResNet-50',s:'Quantized',acc:98.68,f1:98.73,sz:22.62,pa:23.56,gm:4.132,lat:53.10,en:.3626,c:'#8A5A44'},
+{n:'Distilled MobileNetV3',s:'Distilled',acc:99.66,f1:99.66,sz:6.01,pa:1.54,gm:.061,lat:10.02,en:.0602,c:'#2E6B45'},
+{n:'Distilled plus INT8',s:'Distilled INT8',acc:9.15,f1:3.24,sz:1.63,pa:1.54,gm:.061,lat:11.73,en:.0886,c:'#A8432B'}];
+const P={
+tomato:{t:'Tomato late blight',lat:'Phytophthora infestans',host:'Host: Solanum lycopersicum (tomato)',s:3,sl:'High infection pressure',sc:'#A8432B',sd:'var(--bad)',top:[['Late blight',99.66],['Early blight',.28],['Septoria spot',.06]],note:'A water mold that spreads dark, fast-growing lesions across leaves and stems in cool, wet fields.',org:'Copper hydroxide spray with Bacillus subtilis QST 713. Prune infected lower canopy.',chem:'Mancozeb alternated with Cymoxanil or Chlorothalonil. Avoid overhead irrigation.',c1:'#3F7A52',c2:'#5A3A22',les:1,th:'Tomato blight',cls:'Tomato___Late_blight'},
+corn:{t:'Corn common rust',lat:'Puccinia sorghi',host:'Host: Zea mays (sweet and field maize)',s:2,sl:'Moderate pustule spread',sc:'#B7791F',sd:'var(--warn)',top:[['Common rust',99.18],['Northern leaf blight',.68],['Gray leaf spot',.14]],note:'A rust fungus that forms cinnamon-brown pustules on both sides of the leaf.',org:'Micronized wettable sulfur or Reynoutria sachalinensis extract at early whorl stage. Use resistant hybrids.',chem:'Azoxystrobin with propiconazole before tassel emergence.',c1:'#5B8F4B',c2:'#B45309',les:1,th:'Corn rust',cls:'Corn_(maize)___Common_rust_'},
+potato:{t:'Potato early blight',lat:'Alternaria solani',host:'Host: Solanum tuberosum (potato)',s:2,sl:'Target-spot lesions',sc:'#B7791F',sd:'var(--warn)',top:[['Early blight',99.42],['Late blight',.49],['Healthy',.09]],note:'A fungus that makes dark, target-like rings surrounded by yellowing tissue.',org:'Trichoderma harzianum and Bacillus amyloliquefaciens sprays. Rotate away from nightshades.',chem:'Boscalid or fluopyram with pyrimethanil every 10 to 14 days.',c1:'#3F7A52',c2:'#78350F',les:1,th:'Potato early',cls:'Potato___Early_blight'},
+apple:{t:'Apple healthy',lat:'No pathogen detected',host:'Host: Malus domestica (orchard apple)',s:0,sl:'Healthy canopy',sc:'#2E6B45',sd:'var(--good)',top:[['Healthy',99.89],['Scab',.08],['Cedar rust',.03]],note:'Even chlorophyll and intact leaf tissue, with no scab or cedar rust lesions.',org:'Keep up compost tea drenches and dormant-season neem oil.',chem:'No fungicide needed.',c1:'#5BA36B',c2:'#5BA36B',les:0,th:'Apple healthy',cls:'Apple___healthy'}};
+let cur='tomato',rem='org',selM=-1,custom=false;
+
+function toast(m){const i=$('isle');$('tt').textContent=m;i.classList.add('t');clearTimeout(tT);tT=setTimeout(()=>i.classList.remove('t'),3000)}
+function leaf(c1,c2,l){return `<path d="M45 6C70 18 80 52 45 84C10 52 20 18 45 6Z" fill="${c1}"/><path d="M45 6V84M45 30L58 22M45 48L30 40M45 62L60 54" stroke="var(--view)" stroke-width="1.2" fill="none"/>${l?`<circle cx="38" cy="38" r="6" fill="${c2}"/><circle cx="53" cy="52" r="8" fill="${c2}"/><circle cx="45" cy="70" r="4" fill="${c2}"/>`:''}`}
+
+function setRem(){$('rem').textContent=P[cur][rem];$('tO').classList.toggle('on',rem==='org');$('tC').classList.toggle('on',rem==='chem')}
+function load(k){
+  cur=k;custom=false;const p=P[k];
+  $('up').hidden=true;$('lf').innerHTML=leaf(p.c1,p.c2,p.les);$('lf').style.display='';
+  $('stage').classList.toggle('none',!p.les);$('stage').style.display='';
+  $('lb1').innerHTML=`<b>${p.top[0][0]}</b>${p.top[0][1].toFixed(1)}% match`;
+  $('cls').textContent=p.cls;$('hostn').textContent=p.host;document.querySelectorAll('.pc').forEach(e=>e.textContent='Predicts '+p.top[0][0].toLowerCase());
+  $('ttl').textContent=p.t;$('latn').textContent=p.lat;
+  $('segs').innerHTML=[0,1,2,3].map(i=>`<span style="background:${i<p.s?p.sc:'var(--track)'}"></span>`).join('');
+  const sv=$('sev');sv.textContent=p.sl;sv.style.color=p.sd;
+  const pr=p.top[0][1];$('rg').setAttribute('stroke-dasharray',(pr/100*201.06).toFixed(1)+' 201.1');$('rt').textContent=pr.toFixed(1)+'%';
+  $('tp').innerHTML=p.top.map((r,i)=>`<div style="display:flex;justify-content:space-between;gap:8px;${i?'color:var(--ink2)':'font-weight:500'}"><span>${r[0]}</span><span>${r[1].toFixed(2)}%</span></div>`).join('');
+  $('note').textContent=p.note;setRem();
+  document.querySelectorAll('#thumbs button[data-k]').forEach(b=>b.classList.toggle('on',b.dataset.k===k));
+}
+$('thumbs').innerHTML=Object.keys(P).map(k=>`<button data-k="${k}" title="${P[k].th}" aria-label="${P[k].th}" style="background:${P[k].c1}"></button>`).join('')+'<button class="add" title="Upload photo" aria-label="Upload photo"><svg class="i"><use href="#i-pl"/></svg></button>';
+$('thumbs').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.k){load(b.dataset.k);toast('Loaded sample: '+P[b.dataset.k].th)}else $('file').click()});
+$('tO').onclick=()=>{rem='org';setRem()};$('tC').onclick=()=>{rem='chem';setRem()};
+
+$('view').addEventListener('click',()=>$('file').click());
+$('file').addEventListener('click',e=>e.stopPropagation());
+$('file').addEventListener('change',e=>{const f=e.target.files&&e.target.files[0];if(!f)return;
+  custom=true;currentFile=f;$('up').src=URL.createObjectURL(f);$('up').hidden=false;$('lf').style.display='none';$('stage').style.display='none';
+  $('cls').textContent=f.name;toast('Loaded '+f.name);analyze()});
+['dragover','drop'].forEach(ev=>$('view').addEventListener(ev,e=>{e.preventDefault();if(ev==='drop'&&e.dataTransfer.files[0]){$('file').files=e.dataTransfer.files;$('file').dispatchEvent(new Event('change'))}}));
+
+const SM=[['All four models',-1]].concat(M.slice(0,4).map((m,i)=>[m.n,i]));
+$('sm').innerHTML=SM.map(s=>`<button data-i="${s[1]}">${s[0]}</button>`).join('');
+$('sb').onclick=e=>{e.stopPropagation();$('sm').classList.toggle('o')};
+$('sm').addEventListener('click',e=>{const b=e.target.closest('button');if(b){selM=+b.dataset.i;$('sl').textContent=b.textContent;$('sm').classList.remove('o')}});
+
+async function analyze(){
+  const v=$('view');v.classList.remove('scan');void v.offsetWidth;v.classList.add('scan');setTimeout(()=>v.classList.remove('scan'),3000);
+  race();
+  if(custom && currentFile){
+    try {
+      const fd = new FormData();
+      fd.append('file', currentFile);
+      const res = await fetch('/predict', { method: 'POST', body: fd });
+      if(res.ok){
+        const data = await res.json();
+        updateLiveResults(data);
+      }
+    } catch(err){
+      console.warn('Live API unavailable or offline:', err);
+    }
+  }
+}
+$('go').onclick=analyze;
+
+function updateLiveResults(d){
+  $('ttl').textContent = d.top_class;
+  $('latn').textContent = d.is_healthy ? 'Normal leaf tissue' : 'Edge ONNX model prediction';
+  $('hostn').textContent = 'Custom uploaded specimen';
+  $('cls').textContent = d.top_class;
+  const pr = d.top_confidence;
+  $('rg').setAttribute('stroke-dasharray', (pr/100*201.06).toFixed(1)+' 201.1');
+  $('rt').textContent = pr.toFixed(1)+'%';
+  $('tp').innerHTML = d.predictions.slice(0, 3).map((r,i)=>`<div style="display:flex;justify-content:space-between;gap:8px;${i?'color:var(--ink2)':'font-weight:500'}"><span>${r.class}</span><span>${r.confidence.toFixed(2)}%</span></div>`).join('');
+  const sv = $('sev');
+  sv.textContent = d.is_healthy ? 'Healthy canopy' : 'Infection detected';
+  sv.style.color = d.is_healthy ? 'var(--good)' : 'var(--bad)';
+  $('segs').innerHTML = [0,1,2,3].map(i=>`<span style="background:${d.is_healthy ? 'var(--good)' : (i<3 ? 'var(--bad)' : 'var(--track)')}"></span>`).join('');
+  $('note').textContent = d.is_healthy 
+    ? 'The uploaded sample shows clear leaf tissue with no characteristic disease lesions.' 
+    : `Inference diagnosed ${d.top_class} with ${d.top_confidence}% confidence score on edge CPU.`;
+  $('rem').textContent = d.is_healthy ? 'Maintain normal watering and regular crop scouting.' : 'Isolate infected foliage and apply targeted treatment based on label instructions.';
+}
+
+function race(){
+  const names=[0,1,2,3];names.forEach(i=>{$('l'+i).textContent='...';$('r'+i).style.opacity=(selM<0||selM===i)?1:.35});
+  const t=[[3,180],[1,500],[2,560],[0,950]];
+  t.forEach(([i,d])=>setTimeout(()=>{$('l'+i).textContent=M[i].lat.toFixed(1)+' ms'},d));
+  setTimeout(()=>toast('Race finished: distilled MobileNetV3 won in 10.0 ms'),1000);
+}
+
+function rnd(s){return()=>{s=(s*9301+49297)%233280;return s/233280}}
+function spark(v,c,sd){const r=rnd(sd);let d='';for(let i=0;i<40;i++){const x=i/39*180,y=33-(v*(1+(r()-.5)*.14)/110)*30;d+=(i?' L':'M')+x.toFixed(1)+','+y.toFixed(1)}return `<svg width="180" height="36" aria-hidden="true"><path d="${d}" fill="none" stroke="${c}" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/></svg>`}
+(function(){let h='<div class="lr h"><span>Model</span><span>Accuracy</span><span>Size</span><span>Energy</span><span>Latency per inference</span></div>';
+M.slice(0,4).forEach((m,i)=>{h+=`<div class="lr${i===3?' w':''}" id="r${i}"><span>${m.n}<small class="pc"></small></span><span>${m.acc.toFixed(2)}%</span><span>${m.sz.toFixed(1)} MB</span><span>${m.en.toFixed(3)} Wh</span><span class="sp">${spark(m.lat,i===3?'#2E6B45':'#6B7A70',[3,7,11,19][i])}<span class="ms" id="l${i}">${m.lat.toFixed(1)} ms</span></span></div>`});
+$('lboard').innerHTML=h})();
+
+const DM={size:{k:'sz',u:' MB',d:1,l:'Disk size'},energy:{k:'en',u:' Wh',d:3,l:'Energy'},latency:{k:'lat',u:' ms',d:1,l:'Latency'},macs:{k:'gm',u:' G',d:2,l:'Compute'}};
+$('sqc').innerHTML=Object.keys(DM).map((k,i)=>`<button class="chip${i?'':' on'}" data-m="${k}">${DM[k].l}</button>`).join('');
+function sq(m){const o=DM[m],v=M.slice(0,4).map(x=>x[o.k]);let s='',l='';
+  v.forEach((x,i)=>{const side=140*Math.sqrt(x/v[0]);s+=`<rect x="5" y="${(145-side).toFixed(1)}" width="${side.toFixed(1)}" height="${side.toFixed(1)}" fill="${['var(--line)','#AEBCA6','#8FA487','#2E6B45'][i]}" fill-opacity="${i===3?1:.7}" stroke="#5E6F63" stroke-width=".5"/>`;
+    l+=`<div style="display:flex;justify-content:space-between;gap:8px;${i===3?'font-weight:500':''}"><span><span class="sw" style="background:${['var(--line)','#AEBCA6','#8FA487','#2E6B45'][i]};border-radius:2px;margin-right:6px"></span>${M[i].s}</span><span>${x.toFixed(o.d)}${o.u}</span></div>`});
+  $('sq').innerHTML=s;$('sql').innerHTML=l}
+$('sqc').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;document.querySelectorAll('#sqc .chip').forEach(c=>c.classList.remove('on'));b.classList.add('on');sq(b.dataset.m)});sq('size');
+
+const K=[['acc','Accuracy','%',2,1],['f1','Macro F1','%',2,1],['lat','Latency',' ms',2,0],['en','Energy',' Wh',4,0],['sz','Size',' MB',2,0],['pa','Params','M',2,0],['gm','GMACs','',3,0]];
+const OR=['1st','2nd','3rd','4th','5th'];let sel=3;
+const f=(k,v)=>v.toFixed(k[3])+k[2];
+function pos(k,v){if(k[0]==='acc'||k[0]==='f1')return v<98.5?7:20+((v-98.5)/1.5)*74;
+  const a=M.map(m=>m[k[0]]),lo=Math.min(...a),hi=Math.max(...a);return 6+((Math.log(hi)-Math.log(v))/(Math.log(hi)-Math.log(lo)))*88}
+$('xchips').innerHTML=M.map((m,j)=>`<button class="chip" data-j="${j}"><span class="sw" style="background:${m.c}"></span>${m.s}</button>`).join('');
+function ex(){
+  document.querySelectorAll('#xchips .chip').forEach((c,i)=>{c.style.borderColor=i===sel?M[i].c:'transparent';c.classList.toggle('on',i===sel)});
+  let firsts=0,h='';
+  K.forEach(k=>{
+    const rank=i=>1+M.filter(m=>k[4]?m[k[0]]>M[i][k[0]]:m[k[0]]<M[i][k[0]]).length;
+    const grp=i=>M.map((m,x)=>x).filter(x=>M[x][k[0]]===M[i][k[0]]);
+    const r=rank(sel);if(r===1)firsts++;
+    const col=r===1?'var(--good)':(r===5?'var(--bad)':'var(--ink2)');
+    let dots=(k[0]==='acc'||k[0]==='f1')?'<span class="bk" style="left:14%" title="Axis break: scores below 98.5% are off this scale">//</span>':'';
+    M.forEach((m,i)=>{const g=grp(i),gi=g.indexOf(i),top=g.length>1?32+gi*36:50,on=i===sel,sz=on?20:12;
+      dots+=`<span class="dt" title="${m.n}: ${f(k,m[k[0]])}" data-j="${i}" style="left:${pos(k,m[k[0]]).toFixed(1)}%;top:${top}%;width:${sz}px;height:${sz}px;background:${m.c};box-shadow:${on?`0 0 0 3px var(--paper),0 0 0 4.5px ${m.c}`:'none'};z-index:${on?2:1};opacity:${on?1:.6}"></span>`});
+    h+=`<div class="xr"><span>${k[1]}</span><span style="font-weight:500">${f(k,M[sel][k[0]])}</span><span style="color:${col};font-weight:500">${grp(sel).length>1?'Tied ':''}${OR[r-1]}</span><div class="tr">${dots}</div></div>`});
+  $('xrows').innerHTML=h;
+  $('xsum').textContent=sel===4?'Fast and tiny, but accuracy collapsed to 9.15%. INT8 broke this model.':`${M[sel].n} ranks first on ${firsts} of 7 metrics`}
+const pick=e=>{const t=e.target.closest('[data-j]');if(t){sel=+t.dataset.j;ex()}};
+$('xchips').addEventListener('click',pick);$('xrows').addEventListener('click',pick);ex();
+
+$('mLog').onclick=()=>{live=false;$('mLog').classList.add('on');$('mLive').classList.remove('on');toast('Switched to the logged CSV profile')};
+$('mLive').onclick=async()=>{toast('Checking the live API at localhost:8000...');try{const c=new AbortController(),t=setTimeout(()=>c.abort(),2000);await fetch('/docs',{signal:c.signal});clearTimeout(t);live=true;$('mLive').classList.add('on');$('mLog').classList.remove('on');toast('Connected to the live API at localhost:8000')}catch(e){toast('Live API not reachable. Staying on the logged profile.')}};
+$('xb').onclick=e=>{e.stopPropagation();$('xm').classList.toggle('o')};
+document.addEventListener('click',()=>{$('xm').classList.remove('o');$('sm').classList.remove('o')});
+
+function csv(){
+  const rows=["Model,Top-1 Acc (%),Macro F1 (%),Size (MB),Params (M),GMACs,Edge CPU Latency (ms/img),Edge CPU Energy (Wh/500)",
+  "1. Baseline_ResNet50 (FP32),99.83,99.75,90.16,23.56,4.132,94.91,0.5449",
+  "2. Pruned_ResNet50 (25% Ch),99.47,99.38,50.93,13.28,2.397,49.82,0.2824",
+  "3. Quantized_ResNet50 (INT8),98.68,98.73,22.62,23.56,4.132,53.10,0.3626",
+  "4. KD_MobileNetV3_Small (FP32),99.66,99.66,6.01,1.54,0.061,10.02,0.0602",
+  "5. KD_MobileNetV3 + INT8 (Combo),9.15,3.24,1.63,1.54,0.061,11.73,0.0886"].join("\n");
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([rows],{type:'text/csv;charset=utf-8;'}));a.download='final_research_comparison.csv';a.click();toast('Exported final_research_comparison.csv')}
+async function zip(){
+  if(typeof JSZip==='undefined'){toast('JSZip is still loading. Try again in a moment.');return}
+  const z=new JSZip(),css=$('dashboard-styles').innerText.trim(),js=$('dashboard-script').innerText.trim(),d=document.documentElement.cloneNode(true);
+  const st=d.querySelector('#dashboard-styles');if(st){const l=document.createElement('link');l.setAttribute('rel','stylesheet');l.setAttribute('href','styles.css');st.parentNode.replaceChild(l,st)}
+  const sc=d.querySelector('#dashboard-script');if(sc){const s=document.createElement('script');s.setAttribute('src','app.js');sc.parentNode.replaceChild(s,sc)}
+  z.file('index.html','<!DOCTYPE html>\n'+d.outerHTML);z.file('styles.css',css);z.file('app.js',js);
+  const a=document.createElement('a');a.href=URL.createObjectURL(await z.generateAsync({type:'blob'}));a.download='terraleaf_edge_dashboard.zip';a.click();toast('Downloaded terraleaf_edge_dashboard.zip')}
+$('xcsv').onclick=csv;$('xzip').onclick=zip;
+load('tomato');
+</script>
 </body>
 </html>
-

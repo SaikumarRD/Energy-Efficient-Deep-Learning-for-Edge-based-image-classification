@@ -8,6 +8,7 @@ import onnxruntime as ort
 from fastapi import FastAPI, File, UploadFile
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
 from PIL import Image
 
 # ── Configuration ──────────────────────────────────────────────────────────────
@@ -52,6 +53,14 @@ INPUT_NAME = session.get_inputs()[0].name
 
 # ── FastAPI App ────────────────────────────────────────────────────────────────
 app = FastAPI(title="Edge-AI Plant Disease Diagnosis")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 def preprocess(image: Image.Image) -> np.ndarray:
