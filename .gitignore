@@ -1,0 +1,34 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Datasets (large image archives)
+plant_disease_data/
+*.zip
+*.tar.gz
+*.tar
+
+# Model Checkpoints & Weights (>50MB causes warnings / >100MB blocked by GitHub)
+# (Share weights via GitHub Releases, HuggingFace Hub, or Google Drive)
+*.pth
+*.pt
+*.onnx
+*.bin
+
+# Profiling & Emitted Logs
+emissions.csv
+*.log
+
+# OS & Editor generated files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
