@@ -16,11 +16,14 @@ plant_disease_data/
 *.tar
 
 # Model Checkpoints & Weights (>50MB causes warnings / >100MB blocked by GitHub)
-# (Share weights via GitHub Releases, HuggingFace Hub, or Google Drive)
+# Heavy models can be downloaded from the GitHub Releases page
 *.pth
 *.pt
 *.onnx
 *.bin
+
+# Whitelist lightweight (6 MB) production model for instant web & CLI demo
+!kd_mobilenetv3_fp32.onnx
 
 # Profiling & Emitted Logs
 emissions.csv

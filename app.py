@@ -3,6 +3,7 @@ FastAPI Backend — Edge-AI Plant Disease Diagnosis
 Serves the best ONNX model (KD MobileNetV3-Small FP32) via REST API.
 """
 import io
+import time
 import numpy as np
 import onnxruntime as ort
 from fastapi import FastAPI, File, UploadFile
@@ -80,7 +81,9 @@ async def predict(file: UploadFile = File(...)):
     tensor = preprocess(image)
 
     # Run ONNX inference
+    start = time.perf_counter()
     logits = session.run(None, {INPUT_NAME: tensor})[0][0]    # shape: (23,)
+    latency_ms = round((time.perf_counter() - start) * 1000, 2)
 
     # Softmax for probabilities
     exp_logits = np.exp(logits - np.max(logits))
@@ -98,6 +101,7 @@ async def predict(file: UploadFile = File(...)):
         "top_class": predictions[0]["class"],
         "top_confidence": predictions[0]["confidence"],
         "is_healthy": "healthy" in predictions[0]["class"].lower(),
+        "latency_ms": latency_ms,
     }
 
 

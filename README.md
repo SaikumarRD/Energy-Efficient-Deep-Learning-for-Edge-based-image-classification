@@ -61,6 +61,7 @@ All models were evaluated under identical edge CPU runtime conditions with locke
 │   ├── index.html                       # Dashboard layout & disease diagnosis UI
 │   ├── style.css                        # Modern dark-mode responsive styling
 │   └── script.js                        # Drag-and-drop & API integration
+├── inference.py                         # Standalone CLI for single-image diagnosis
 ├── dataset_setup.py                     # Data loaders, augmentations & seed reproducibility
 ├── baseline_and_benchmark.py            # Baseline ResNet-50 training & benchmark pipeline
 ├── step3_pruning.py                     # Structured channel pruning implementation
@@ -132,18 +133,26 @@ uvicorn app:app --reload --port 8000
 ```
 Then open your browser and navigate to **`http://localhost:8000`**.
 
+### 5. Running Standalone CLI Inference
+You can also run rapid on-device inference from the terminal without starting the web server:
+
+```bash
+python inference.py --image path/to/leaf.jpg
+```
+*Optional parameters: `--model <path_to_onnx>` (default: `kd_mobilenetv3_fp32.onnx`) and `--threads <num_threads>` (default: 4).*
+
 ---
 
 ## 🗺️ Roadmap & Next Steps
 
-- [ ] **Phase 1: Web Interface**: Build an intuitive Streamlit / Gradio frontend for real-time leaf image diagnosis and disease confidence scores.
-- [ ] **Phase 2: REST API**: Wrap the ONNX runtime model in a lightweight FastAPI microservice.
-- [ ] **Phase 3: Hardware In-the-Loop Validation**: Deploy and record live power/thermal metrics on an edge device (e.g., Raspberry Pi 4 / Coral Edge TPU).
+- [x] **Phase 1: Web Interface**: Interactive TerraLeaf Edge AI dashboard with CPU race benchmarks and trade-off visualizer.
+- [x] **Phase 2: REST API & CLI**: Lightweight FastAPI microservice and standalone command-line inference tool.
+- [ ] **Phase 3: Hardware In-the-Loop Validation**: Deploy and record live power/thermal metrics on a physical edge device (e.g., Raspberry Pi 4 / Coral Edge TPU).
 
 ---
 
 ## 📜 Model Weights Note
-Due to file size limits on GitHub, raw `.pth` and `.onnx` model weights are excluded from Git version control. Trained checkpoints and ONNX artifacts can be regenerated using the reproduction scripts above, or downloaded from the upcoming GitHub Releases.
+The lightweight production model (`kd_mobilenetv3_fp32.onnx`, ~6 MB) is bundled directly in the repository for instant, out-of-the-box web and CLI inference. Heavy training checkpoints and baseline models (such as `baseline_resnet50.pth`, 94.5 MB) are hosted separately on the GitHub Releases page to keep the repository fast and lightweight.
 
 ---
 
